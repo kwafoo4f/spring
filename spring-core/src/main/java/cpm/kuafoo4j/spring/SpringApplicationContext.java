@@ -1,6 +1,8 @@
 package cpm.kuafoo4j.spring;
 
 import cpm.kuafoo4j.spring.annatation.*;
+import cpm.kuafoo4j.spring.ext.BeanPostProcessor;
+import cpm.kuafoo4j.spring.ext.InitializingBean;
 
 import java.beans.Introspector;
 import java.io.File;
@@ -9,7 +11,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +29,8 @@ public class SpringApplicationContext {
     private Map<String,BeanDefinition> beanDefinitionMap = new HashMap<>();
     // 单例池
     private Map<String,Object> singletonBeanMap = new HashMap<>();
+
+    List<BeanPostProcessor> beanPostProcessorList = new ArrayList<>();
 
 
     public SpringApplicationContext(Class<?> clazz) {
@@ -128,6 +134,19 @@ public class SpringApplicationContext {
             beanDefinition.setScope(SINGLETON);
         }
 
+        // 记录后置处理器
+        // 查询当前类是否实现BeanPostProcessor接口
+        if (BeanPostProcessor.class.isAssignableFrom(clazz)) {
+            BeanPostProcessor instance = null;
+            try {
+                instance = (BeanPostProcessor)clazz.getConstructor().newInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            beanPostProcessorList.add(instance);
+        }
+
+        // 加入单例池
         beanDefinitionMap.put(beanName,beanDefinition);
     }
 
@@ -160,12 +179,26 @@ public class SpringApplicationContext {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Autowired.class)) {
                     field.setAccessible(true);
-                    String name = field.getName();
-                    Object fieldBean = getBean(name);
-                    field.set(bean,fieldBean);
+                    field.set(bean,getBean(field.getName()));
                     field.setAccessible(false);
                 }
             }
+
+            // 属性填充前
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                bean = beanPostProcessor.postProcessBeforeInitialization(bean,beanName);
+            }
+
+            // 属性填充
+            if (bean instanceof InitializingBean) {
+                ((InitializingBean)bean).afterPropertiesSet();
+            }
+
+            // 属性填充后
+            for (BeanPostProcessor beanPostProcessor : beanPostProcessorList) {
+                bean = beanPostProcessor.postProcessAfterInitialization(bean,beanName);
+            }
+
             return bean;
         } catch (NoSuchMethodException | InvocationTargetException
                 | InstantiationException | IllegalAccessException e) {

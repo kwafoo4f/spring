@@ -1,5 +1,6 @@
 package com.kuafoo4j.example;
 
+import com.kuafoo4j.example.service.OrderService;
 import com.kuafoo4j.example.service.UserService;
 import cpm.kuafoo4j.spring.SpringApplicationContext;
 
@@ -15,5 +16,9 @@ public class Application {
         UserService userService = (UserService) applicationContext.getBean("userService");
         userService.test();
         userService.orderTest();
+
+        OrderService orderService = (OrderService) applicationContext.getBean("orderService");
+        orderService.test();
+
     }
 }
