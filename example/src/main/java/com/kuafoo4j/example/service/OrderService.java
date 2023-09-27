@@ -2,6 +2,7 @@ package com.kuafoo4j.example.service;
 
 
 import cpm.kuafoo4j.spring.annatation.Component;
+import cpm.kuafoo4j.spring.annatation.Lazy;
 import cpm.kuafoo4j.spring.ext.BeanPostProcessor;
 
 /**
@@ -9,6 +10,7 @@ import cpm.kuafoo4j.spring.ext.BeanPostProcessor;
  * @author: zk
  * @date: 2023-09-27 15:15
  */
+@Lazy
 @Component
 public class OrderService implements BeanPostProcessor {
 

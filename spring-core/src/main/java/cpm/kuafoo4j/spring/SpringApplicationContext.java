@@ -199,7 +199,13 @@ public class SpringApplicationContext {
                 bean = beanPostProcessor.postProcessAfterInitialization(bean,beanName);
             }
 
+            // 放入单例池中
+            if (SINGLETON.equals(beanDefinition.getScope()) && !singletonBeanMap.containsKey(beanName)) {
+                singletonBeanMap.put(beanName,bean);
+            }
+
             return bean;
+
         } catch (NoSuchMethodException | InvocationTargetException
                 | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
